@@ -1,8 +1,7 @@
 # molecularAtt
 
-A pytorch implement of [Drug3D-Net](https://github.com/anny0316/Drug3D-Net) [<sup>1</sup>](#refer-anchor) with QM9[<sup>2,3</sup>](#refer-anchor) dataset.  
-main branch - stable version  
-pc branch - implement version on pc  
+A pytorch implement of [Drug3D-Net](https://github.com/anny0316/Drug3D-Net) [<sup>1</sup>](#refer-anchor) with QM9 [<sup>2,3</sup>](#refer-anchor) dataset.  
+master branch - stable version  
 lab branch - implement version on lab server
 
 ## todo list
