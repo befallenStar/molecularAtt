@@ -1,12 +1,14 @@
 # molecularAtt
 
 A pytorch implement of [Drug3D-Net](https://github.com/anny0316/Drug3D-Net) [<sup>1</sup>](#refer-anchor) with QM9 [<sup>2,3</sup>](#refer-anchor) dataset.  
+And design my network to adapt the voxel input.  
 master branch - stable version  
 lab branch - implement version on lab server
 
 ## todo list
-- [ ] TODO: load data from qm9 dataset and convert into voxel
-- [ ] TODO: implement the network structure with pytorch
+- [ ] TODO: load data from qm9 dataset and convert into voxel  
+- [ ] TODO: implement the network structure with pytorch  
+- [ ] TODO: design my network to rationally combine the two attention modules  
 
 ## Reference
 
