@@ -5,7 +5,6 @@ focus on WHAT is important in the data
 """
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 class ChannelAtt(nn.Module):
@@ -18,6 +17,7 @@ class ChannelAtt(nn.Module):
         # mlp
         self.shared_mlp = nn.Sequential(
             nn.Linear(cin, cin // ratio),
+            nn.ReLU(),
             nn.Linear(cin // ratio, cin)
         )
         # addition
