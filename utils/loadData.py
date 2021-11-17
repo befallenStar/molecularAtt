@@ -24,9 +24,12 @@ def load_data(dir_path, mode='train'):
             path = os.path.join(root, filename)
             data = np.load(path)
             voxel.append(data['voxel'])
-            target.append(data['properties'])
-    voxel = torch.tensor(np.array(voxel))
-    target = torch.tensor(np.array(target))
+            # normalization for the properties
+            feature = data['properties']
+            feature = np.arctan(feature) * 2 / np.pi
+            target.append(feature)
+    voxel = torch.tensor(np.array(voxel, dtype=np.float32))
+    target = torch.tensor(np.array(target, dtype=np.float32))
     return TensorDataset(voxel, target)
 
 
@@ -36,6 +39,7 @@ def main():
     for batch_idx, (data, target) in enumerate(data_loader):
         print(data.shape)
         print(target.shape)
+        print(len(data_loader.dataset))
 
 
 if __name__ == '__main__':

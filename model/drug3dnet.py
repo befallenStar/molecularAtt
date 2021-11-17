@@ -5,7 +5,7 @@ pytorch version of Drug3D-Net
 import torch
 import torch.nn as nn
 
-from gatedAtt import GatedAtt
+from model.gatedAtt import GatedAtt
 
 
 class GridFeature(nn.Module):
@@ -31,6 +31,20 @@ class GridFeature(nn.Module):
         return self.dropout(x)
 
 
+class FCN(nn.Module):
+    def __init__(self, cin, cout, activation='relu'):
+        super(FCN, self).__init__()
+        self.linear = nn.Linear(cin, cout)
+        self.activation = activation
+
+    def forward(self, x):
+        x = self.linear(x.reshape(x.shape[0], -1))
+        if self.activation == 'relu':
+            return torch.relu(x)
+        elif self.activation == 'tanh':
+            return torch.tanh(x)
+
+
 class Drug3DNet(nn.Module):
     def __init__(self, cin):
         super(Drug3DNet, self).__init__()
@@ -39,9 +53,13 @@ class Drug3DNet(nn.Module):
             GridFeature(32, 128, 8),
             GridFeature(128, 512, 8),
         )
+        self.fcn1 = FCN(32768, 1024)
+        self.fcn2 = FCN(1024, 15)
 
     def forward(self, x):
         x = self.backbone(x)
+        x = self.fcn1(x)
+        x = self.fcn2(x)
         return x
 
 
