@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader, random_split
 from ignite.handlers import EarlyStopping
 from model.drug3dnet import Drug3DNet
 from utils.loadData import load_data
+from time import time
 
 
 def train(model, train_db, epoch, batch_size, optimizer=None, val_fn=None):
@@ -30,6 +31,7 @@ def train(model, train_db, epoch, batch_size, optimizer=None, val_fn=None):
     train_db, val_db = random_split(train_db, [split_ratio, len(train_db) - split_ratio])
     train_loader = DataLoader(train_db, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_db, batch_size=batch_size, shuffle=True)
+    start = time()
     for i in range(epoch):
         for batch_idx, (data, target) in enumerate(train_loader):
             pred = model(data)
@@ -52,6 +54,7 @@ def train(model, train_db, epoch, batch_size, optimizer=None, val_fn=None):
         print("Validation MSE Loss: {:.6f}".format(mae_loss))
 
         # do the early stopping
+    print("Train time: {}".format(time() - start))
 
     return model
 
@@ -66,21 +69,23 @@ def test(model, test_db, batch_size, val_fn):
     """
     test_loader = DataLoader(test_db, batch_size=batch_size, shuffle=True)
     test_loss = 0
+    start = time()
     for batch_idx, (data, target) in enumerate(test_loader):
         pred = model(data)
         test_loss += val_fn(target, pred)
     test_loss /= len(test_loader.dataset)
     print("MAE Loss: {:.6f}".format(test_loss))
+    print("Test time: {}".format(time() - start))
 
 
 def main():
     model = Drug3DNet(5)
-    dir_path = './data/input32'
+    dir_path = './data/input32_2'
     # read from ./data/input/train
     train_db = load_data(dir_path, mode='train')
     # read from ./data/input/test
     test_db = load_data(dir_path, mode='test')
-    epoch = 10
+    epoch = 100
     batch_size = 8
     # learning rate
     learning_rate = 0.01
