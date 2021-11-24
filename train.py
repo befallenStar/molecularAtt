@@ -12,7 +12,7 @@ from model.drug3dnet import Drug3DNet
 from utils.loadData import load_data
 from time import time
 import os
-os.environ['CUDA_VISIBLE_DEVICE'] = "1"
+os.environ['CUDA_VISIBLE_DEVICES'] = "1"
 
 
 def train(model, train_db, epoch, batch_size, optimizer=None, val_fn=None, device=torch.device('cpu')):
@@ -46,7 +46,7 @@ def train(model, train_db, epoch, batch_size, optimizer=None, val_fn=None, devic
             loss.backward()
             optimizer.step()
             # print period result
-            if batch_idx % 1 == 0:
+            if batch_idx % 50 == 0:
                 print("Epoch :{} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(i, batch_idx * len(data), len(train_loader.dataset),
                                                                          100. * batch_idx / len(train_loader), loss.item()))
 
@@ -90,12 +90,12 @@ def test(model, test_db, batch_size, val_fn, device=torch.device('cpu')):
 
 def main():
     model = Drug3DNet(5)
-    dir_path = './data/input32_2'
+    dir_path = './data/input32'
     # read from ./data/input/train
     train_db = load_data(dir_path, mode='train')
     # read from ./data/input/test
     test_db = load_data(dir_path, mode='test')
-    epoch = 10
+    epoch = 100
     batch_size = 8
     # learning rate
     learning_rate = 0.01
