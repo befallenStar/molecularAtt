@@ -12,7 +12,7 @@ from model.drug3dnet import Drug3DNet
 from utils.loadData import load_data
 
 
-def train(model, train_db, batch_size, optimizer=None, val_fn=None):
+def train(model, train_db, batch_size, index, optimizer=None, val_fn=None):
     """
     main function to train the data with cross validation
     :param model: the model to be trained
@@ -33,6 +33,7 @@ def train(model, train_db, batch_size, optimizer=None, val_fn=None):
     val_loader = DataLoader(val_db, batch_size=batch_size, shuffle=True)
     for batch_idx, (data, target) in enumerate(train_loader):
         pred = model(data)
+        target = target[:, index].unsqueeze(1)
         loss = val_fn(pred, target)
         optimizer.zero_grad()
         loss.backward()
@@ -54,7 +55,7 @@ def train(model, train_db, batch_size, optimizer=None, val_fn=None):
     return model
 
 
-def test(model, test_db, batch_size, val_fn):
+def test(model, test_db, batch_size, index, val_fn):
     """
     test the model
     :param model: trained model
@@ -78,6 +79,10 @@ def main():
     test_path = os.path.join(dir_path, 'test')
     epoch = 10
     batch_size = 8
+    # property index
+    # decide which property to learn this time
+    # between 0 and 14
+    index = 0
     for e in range(epoch):
         print("Epoch: {}".format(e))
         for _, dirs, _ in os.walk(train_path):
@@ -85,17 +90,16 @@ def main():
                 subpath = os.path.join(train_path, dir)
                 # read from ./data/input/train
                 train_db = load_data(subpath)
-                # read from ./data/input/test
                 # learning rate
                 learning_rate = 0.01
-                train(model, train_db, batch_size, optimizer=optim.Adadelta(model.parameters(), lr=learning_rate), val_fn=nn.L1Loss())
+                train(model, train_db, batch_size, index=index, optimizer=optim.Adadelta(model.parameters(), lr=learning_rate), val_fn=nn.L1Loss())
 
     for _, dirs, _ in os.walk(test_path):
         for dir in dirs:
             subpath = os.path.join(test_path, dir)
             # read from ./data/input/test
             test_db = load_data(subpath)
-            test(model, test_db, batch_size, val_fn=nn.L1Loss())
+            test(model, test_db, batch_size, index=index, val_fn=nn.L1Loss())
 
 
 if __name__ == '__main__':
