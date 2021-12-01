@@ -25,7 +25,6 @@ def load_data(dir_path):
             voxel.append(data['voxel'])
             # normalization for the properties
             feature = data['properties']
-            feature = np.arctan(feature) * 2 / np.pi
             target.append(feature)
     voxel = torch.tensor(np.array(voxel, dtype=np.float32))
     target = torch.tensor(np.array(target, dtype=np.float32))

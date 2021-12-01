@@ -16,7 +16,7 @@ import os
 os.environ['CUDA_VISIBLE_DEVICES'] = "1"
 
 
-def train(model, train_db, batch_size, optimizer=None, val_fn=None, device=torch.device('cpu')):
+def train(model, train_db, batch_size, index, optimizer=None, val_fn=None, device=torch.device('cpu')):
     """
     main function to train the data with cross validation
     :param model: the model to be trained
@@ -40,6 +40,7 @@ def train(model, train_db, batch_size, optimizer=None, val_fn=None, device=torch
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         pred = model(data)
+        target = target[:, index].unsqueeze(1)
         loss = val_fn(pred, target)
         optimizer.zero_grad()
         loss.backward()
@@ -64,7 +65,7 @@ def train(model, train_db, batch_size, optimizer=None, val_fn=None, device=torch
     return model
 
 
-def test(model, test_db, batch_size, val_fn, device=torch.device('cpu')):
+def test(model, test_db, batch_size, index, val_fn, device=torch.device('cpu')):
     """
     test the model
     :param model: trained model
@@ -96,6 +97,10 @@ def main():
     # device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("current device: {}".format(torch.cuda.current_device()))
+    # property index
+    # decide which property to learn this time
+    # between 0 and 14
+    index = 0
     for e in range(epoch):
         print("Epoch: {}/{}".format(e, epoch))
         for _, dirs, _ in os.walk(train_path):
@@ -105,14 +110,14 @@ def main():
                 train_db = load_data(subpath)
                 # learning rate
                 learning_rate = 0.01
-                train(model, train_db, batch_size, optimizer=optim.Adadelta(model.parameters(), lr=learning_rate), val_fn=nn.L1Loss(), device=device)
+                train(model, train_db, batch_size, index=index, optimizer=optim.Adadelta(model.parameters(), lr=learning_rate), val_fn=nn.L1Loss(), device=device)
 
     for _, dirs, _ in os.walk(test_path):
         for dir in dirs:
             subpath = os.path.join(test_path, dir)
             # read from ./data/input/test
             test_db = load_data(subpath)
-            test(model, test_db, batch_size, val_fn=nn.L1Loss(), device=device)
+            test(model, test_db, batch_size, index=index, val_fn=nn.L1Loss(), device=device)
 
 
 if __name__ == '__main__':
