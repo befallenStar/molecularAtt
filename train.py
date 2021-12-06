@@ -3,6 +3,7 @@
 main function to train the network with qm9 dataset
 """
 import os
+from time import time
 
 import torch
 import torch.nn as nn
@@ -21,12 +22,12 @@ def train(model, train_db, batch_size, index, optimizer=None, val_fn=None, devic
     main function to train the data with cross validation
     :param model: the model to be trained
     :param train_db: data for training and validating
-    :param epoch: iterations to loop the process
     :param batch_size: the size of data to train in the same time
+    :param index: index of which property to train
     :param optimizer: optimizer for optimize the parameters
     :param val_fn: function to validate the accuracy of the model
     :param device: cpu or cuda
-    :return: the trained model
+    :return: validation loss, validation size
     """
     model.to(device)
     if not optimizer:
@@ -55,14 +56,12 @@ def train(model, train_db, batch_size, index, optimizer=None, val_fn=None, devic
     for data, target in val_loader:
         data, target = data.to(device), target.to(device)
         pred = model(data)
+        target = target[:, index].unsqueeze(1)
         val_loss = val_fn(target, pred)
         mae_loss += val_loss
-    mae_loss /= len(val_loader.dataset)
     torch.set_grad_enabled(True)
 
-    print("Validation MSE Loss: {:.6f}".format(mae_loss))
-
-    return model
+    return mae_loss, len(val_loader.dataset)
 
 
 def test(model, test_db, batch_size, index, val_fn, device=torch.device('cpu')):
@@ -81,6 +80,7 @@ def test(model, test_db, batch_size, index, val_fn, device=torch.device('cpu')):
     for batch_idx, (data, target) in enumerate(test_loader):
         data, target = data.to(device), target.to(device)
         pred = model(data)
+        target = target[:, index].unsqueeze(1)
         test_loss += val_fn(target, pred)
     test_loss /= len(test_loader.dataset)
     print("MAE Loss: {:.6f}".format(test_loss))
@@ -88,8 +88,19 @@ def test(model, test_db, batch_size, index, val_fn, device=torch.device('cpu')):
 
 
 def main():
+    path_checkpoint = './checkpoint.pkl'
     model = Drug3DNet(5)
     dir_path = './data/input32_2'
+    learning_rate = 0.01
+    optimizer = optim.Adadelta(model.parameters(), lr=learning_rate)
+    start_epoch = 0
+    # if saved checkpoint exists
+    # load parameters from the checkpoint
+    if os.path.exists(path_checkpoint):
+        checkpoint = torch.load(path_checkpoint)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        start_epoch = checkpoint['epoch'] + 1
     train_path = os.path.join(dir_path, 'train')
     test_path = os.path.join(dir_path, 'test')
     epoch = 100
@@ -101,7 +112,9 @@ def main():
     # decide which property to learn this time
     # between 0 and 14
     index = 0
-    for e in range(epoch):
+    start = time()
+    for e in range(start_epoch, epoch):
+        mae_loss, mae_cnt = 0, 0
         print("Epoch: {}/{}".format(e, epoch))
         for _, dirs, _ in os.walk(train_path):
             for dir in dirs:
@@ -109,8 +122,14 @@ def main():
                 # read from ./data/input/train
                 train_db = load_data(subpath)
                 # learning rate
-                learning_rate = 0.01
-                train(model, train_db, batch_size, index=index, optimizer=optim.Adadelta(model.parameters(), lr=learning_rate), val_fn=nn.L1Loss(), device=device)
+                val_loss, val_cnt = train(model, train_db, batch_size, index=index, optimizer=optimizer, val_fn=nn.L1Loss(), device=device)
+                mae_loss += val_loss
+                mae_cnt += val_cnt
+        print("Validation loss: {}".format(mae_loss / mae_cnt))
+        # save the model checkpoint
+        checkpoint = {"model_state_dict": model.state_dict(), 'optimizer_state_dict': optimizer.state_dict(), 'epoch': e}
+        torch.save(checkpoint, path_checkpoint)
+    print("Training time: {}".format(time() - start))
 
     for _, dirs, _ in os.walk(test_path):
         for dir in dirs:
