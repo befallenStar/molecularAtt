@@ -133,3 +133,6 @@ dmypy.json
 
 # Project data
 data/
+
+# checkpoint file
+checkpoint.pkl

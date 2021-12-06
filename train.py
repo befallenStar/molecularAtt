@@ -3,7 +3,9 @@
 main function to train the network with qm9 dataset
 """
 import os
+from time import time
 
+import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
@@ -19,9 +21,10 @@ def train(model, train_db, batch_size, index, optimizer=None, val_fn=None):
     :param train_db: data for training and validating
     :param epoch: iterations to loop the process
     :param batch_size: the size of data to train in the same time
+    :param index: index of which property to train
     :param optimizer: optimizer for optimize the parameters
     :param val_fn: function to validate the accuracy of the model
-    :return: the trained model
+    :return: validation loss, validation size
     """
     if not optimizer:
         optimizer = optim.Adadelta(model.parameters(), lr=0.01)
@@ -46,13 +49,11 @@ def train(model, train_db, batch_size, index, optimizer=None, val_fn=None):
     mae_loss = 0
     for batch_idx, (data, target) in enumerate(val_loader):
         pred = model(data)
+        target = target[:, index].unsqueeze(1)
         val_loss = val_fn(target, pred)
         mae_loss += val_loss
-    mae_loss /= len(val_loader.dataset)
 
-    print("Validation MSE Loss: {:.6f}".format(mae_loss))
-
-    return model
+    return mae_loss, len(val_loader.dataset)
 
 
 def test(model, test_db, batch_size, index, val_fn):
@@ -67,13 +68,25 @@ def test(model, test_db, batch_size, index, val_fn):
     test_loss = 0
     for batch_idx, (data, target) in enumerate(test_loader):
         pred = model(data)
+        target = target[:, index].unsqueeze(1)
         test_loss += val_fn(target, pred)
     test_loss /= len(test_loader.dataset)
     print("MAE Loss: {:.6f}".format(test_loss))
 
 
 def main():
+    path_checkpoint = './checkpoint.pkl'
     model = Drug3DNet(5)
+    learning_rate = 0.01
+    optimizer = optim.Adadelta(model.parameters(), lr=learning_rate)
+    start_epoch = 0
+    # if saved checkpoint exists
+    # load parameters from the checkpoint
+    if os.path.exists(path_checkpoint):
+        checkpoint = torch.load(path_checkpoint)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        start_epoch = checkpoint['epoch'] + 1
     dir_path = './data/input32'
     train_path = os.path.join(dir_path, 'train')
     test_path = os.path.join(dir_path, 'test')
@@ -83,7 +96,9 @@ def main():
     # decide which property to learn this time
     # between 0 and 14
     index = 0
-    for e in range(epoch):
+    start = time()
+    for e in range(start_epoch, epoch):
+        mae_loss, mae_cnt = 0, 0
         print("Epoch: {}".format(e))
         for _, dirs, _ in os.walk(train_path):
             for dir in dirs:
@@ -91,8 +106,14 @@ def main():
                 # read from ./data/input/train
                 train_db = load_data(subpath)
                 # learning rate
-                learning_rate = 0.01
-                train(model, train_db, batch_size, index=index, optimizer=optim.Adadelta(model.parameters(), lr=learning_rate), val_fn=nn.L1Loss())
+                val_loss, val_cnt = train(model, train_db, batch_size, index=index, optimizer=optimizer, val_fn=nn.L1Loss())
+                mae_loss += val_loss
+                mae_cnt += val_cnt
+        print("Validation loss: {}".format(mae_loss / mae_cnt))
+        # save the model checkpoint
+        checkpoint = {"model_state_dict": model.state_dict(), 'optimizer_state_dict': optimizer.state_dict(), 'epoch': e}
+        torch.save(checkpoint, path_checkpoint)
+    print("Training time: {}".format(time() - start))
 
     for _, dirs, _ in os.walk(test_path):
         for dir in dirs:
