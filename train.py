@@ -14,7 +14,7 @@ from model.drug3dnet import Drug3DNet
 from utils.loadData import load_data
 from time import time
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 
 
 def train(model, train_db, batch_size, index, optimizer=None, val_fn=None, device=torch.device('cpu')):
