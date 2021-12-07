@@ -29,7 +29,6 @@ def train(model, train_db, batch_size, index, optimizer=None, val_fn=None, devic
     :param device: cpu or cuda
     :return: validation loss, validation size
     """
-    model.to(device)
     if not optimizer:
         optimizer = optim.Adadelta(model.parameters(), lr=0.01)
     if not val_fn:
@@ -73,7 +72,6 @@ def test(model, test_db, batch_size, index, val_fn, device=torch.device('cpu')):
     :param optimizer: optimizer for optimize the parameters
     :param device: cpu or cuda
     """
-    model.to(device)
     test_loader = DataLoader(test_db, batch_size=batch_size, shuffle=True)
     test_loss = 0
     start = time()
@@ -88,8 +86,11 @@ def test(model, test_db, batch_size, index, val_fn, device=torch.device('cpu')):
 
 
 def main():
+    # device
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     path_checkpoint = './checkpoint.pkl'
     model = Drug3DNet(5)
+    model.to(device)
     dir_path = './data/input32_2'
     learning_rate = 0.01
     optimizer = optim.Adadelta(model.parameters(), lr=learning_rate)
@@ -97,7 +98,7 @@ def main():
     # if saved checkpoint exists
     # load parameters from the checkpoint
     if os.path.exists(path_checkpoint):
-        checkpoint = torch.load(path_checkpoint)
+        checkpoint = torch.load(path_checkpoint, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         start_epoch = checkpoint['epoch'] + 1
@@ -105,8 +106,6 @@ def main():
     test_path = os.path.join(dir_path, 'test')
     epoch = 100
     batch_size = 16
-    # device
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("current device: {}".format(torch.cuda.current_device()))
     # property index
     # decide which property to learn this time
