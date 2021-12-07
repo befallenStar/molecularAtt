@@ -3,6 +3,7 @@
 main function to train the network with qm9 dataset
 """
 import os
+from argparse import ArgumentParser
 from time import time
 
 import torch
@@ -13,8 +14,12 @@ from torch.utils.data import DataLoader, random_split
 from model.drug3dnet import Drug3DNet
 from utils.loadData import load_data
 from time import time
-import os
-os.environ['CUDA_VISIBLE_DEVICES'] = "0"
+
+parser = ArgumentParser(allow_abbrev=True)
+parser.add_argument('--model', required=True, help='the name of the network')
+parser.add_argument('--index', type=int, required=True, choices=range(0, 15), help='the index of the properties, between 0 and 14')
+parser.add_argument('--path', required=True, default='./data/input32_2', help='the path of the data')
+args = parser.parse_args()
 
 
 def train(model, train_db, batch_size, index, optimizer=None, val_fn=None, device=torch.device('cpu')):
@@ -88,10 +93,13 @@ def test(model, test_db, batch_size, index, val_fn, device=torch.device('cpu')):
 def main():
     # device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    path_checkpoint = './checkpoint.pkl'
-    model = Drug3DNet(5)
+    path_checkpoint = './checkpoint_{}.pkl'.format(args.index)
+    # make the str of model
+    # create the model with the str
+    input_channel = 5
+    model = '{}({})'.format(args.model, input_channel)
+    model = eval(model)
     model.to(device)
-    dir_path = './data/input32_2'
     learning_rate = 0.01
     optimizer = optim.Adadelta(model.parameters(), lr=learning_rate)
     start_epoch = 0
@@ -102,22 +110,21 @@ def main():
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         start_epoch = checkpoint['epoch'] + 1
+    dir_path = args.path
     train_path = os.path.join(dir_path, 'train')
     test_path = os.path.join(dir_path, 'test')
     epoch = 100
     batch_size = 16
     print("current device: {}".format(torch.cuda.current_device()))
     # property index
-    # decide which property to learn this time
-    # between 0 and 14
-    index = 0
+    index = args.index
     start = time()
     for e in range(start_epoch, epoch):
         mae_loss, mae_cnt = 0, 0
         print("Epoch: {}/{}".format(e, epoch))
         for _, dirs, _ in os.walk(train_path):
-            for dir in dirs:
-                subpath = os.path.join(train_path, dir)
+            for subdir in dirs:
+                subpath = os.path.join(train_path, subdir)
                 # read from ./data/input/train
                 train_db = load_data(subpath)
                 # learning rate
@@ -131,8 +138,8 @@ def main():
     print("Training time: {}".format(time() - start))
 
     for _, dirs, _ in os.walk(test_path):
-        for dir in dirs:
-            subpath = os.path.join(test_path, dir)
+        for subdir in dirs:
+            subpath = os.path.join(test_path, subdir)
             # read from ./data/input/test
             test_db = load_data(subpath)
             test(model, test_db, batch_size, index=index, val_fn=nn.L1Loss(), device=device)

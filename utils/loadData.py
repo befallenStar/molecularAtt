@@ -7,7 +7,6 @@ import os
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-from tqdm import tqdm
 
 
 def load_data(dir_path):
@@ -19,7 +18,7 @@ def load_data(dir_path):
     """
     voxel, target = [], []
     for _, _, filenames in os.walk(dir_path):
-        for filename in tqdm(filenames):
+        for filename in filenames:
             path = os.path.join(dir_path, filename)
             data = np.load(path)
             voxel.append(data['voxel'])
