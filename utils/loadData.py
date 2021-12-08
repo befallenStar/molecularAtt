@@ -13,7 +13,6 @@ def load_data(dir_path):
     """
     load data from a directory
     :param dir_path: path to a directory including all the data in npz format
-    :param mode: select in ['train', 'test']
     :return: a dataset contains data and target, ready for transfer into a dataloader and do the batch
     """
     voxel, target = [], []
