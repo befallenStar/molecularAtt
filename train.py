@@ -113,13 +113,17 @@ def main():
     dir_path = args.path
     train_path = os.path.join(dir_path, 'train')
     test_path = os.path.join(dir_path, 'test')
-    epoch = 100
+    epoch = 50
     batch_size = 16
     print("current device: {}".format(torch.cuda.current_device()))
+    print("The name of the nerwork is: {}".format(args.model))
+    print("Load data from: {}".format(args.path))
     # property index
     index = args.index
-    start = time()
+    prop_names = ['rcA', 'rcB', 'rcC', 'mu', 'alpha', 'homo', 'lumo', 'gap', 'r2', 'zpve', 'energy_U0', 'energy_U', 'enthalpy_H', 'free_G', 'Cv']
+    print("Property to be trained is: {}".format(prop_names[index]))
     for e in range(start_epoch, epoch):
+        start = time()
         mae_loss, mae_cnt = 0, 0
         print("Epoch: {}/{}".format(e, epoch))
         for _, dirs, _ in os.walk(train_path):
@@ -135,7 +139,7 @@ def main():
         # save the model checkpoint
         checkpoint = {"model_state_dict": model.state_dict(), 'optimizer_state_dict': optimizer.state_dict(), 'epoch': e}
         torch.save(checkpoint, path_checkpoint)
-    print("Training time: {}".format(time() - start))
+        print("Training time: {}".format(time() - start))
 
     for _, dirs, _ in os.walk(test_path):
         for subdir in dirs:
