@@ -135,4 +135,7 @@ dmypy.json
 data/
 
 # checkpoint file
-.pkl
+*.pkl
+
+# log dir
+log/
