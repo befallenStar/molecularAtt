@@ -46,16 +46,16 @@ class FCN(nn.Module):
 
 
 class Drug3DNet(nn.Module):
-    def __init__(self, cin):
+    def __init__(self, cin, activation='relu'):
         super(Drug3DNet, self).__init__()
         self.backbone = nn.Sequential(
             GridFeature(cin, 32, 8),
             GridFeature(32, 128, 8),
             GridFeature(128, 512, 8),
         )
-        self.fcn1 = FCN(32768, 1024)
-        self.fcn2 = FCN(1024, 32)
-        self.fcn3 = FCN(32, 1)
+        self.fcn1 = FCN(32768, 1024, activation)
+        self.fcn2 = FCN(1024, 32, activation)
+        self.fcn3 = FCN(32, 1, activation)
 
     def forward(self, x):
         x = self.backbone(x)
