@@ -98,7 +98,7 @@ def main():
     # create the model with the str
     input_channel = 5
     activation = 'tanh'
-    model = '{}({}, {})'.format(args.model, input_channel, activation)
+    model = '{}({}, \"{}\")'.format(args.model, input_channel, activation)
     model = eval(model)
     model.to(device)
     learning_rate = 0.01
