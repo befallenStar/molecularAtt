@@ -248,9 +248,9 @@ class SwinTransformer(nn.Module):
 
 
 def main():
-    data = torch.randn([4, 16, 16, 16, 5])
+    data = torch.randn([4, 16, 16, 16, 32])
     window_size = 8
-    swin = SwinTransformer(5, 16, 5, window_size=window_size, shift_size=window_size // 2)
+    swin = SwinTransformer(32, 16, 8, window_size=window_size, shift_size=window_size // 2)
     result = swin(data)
     print(result.shape)
 
