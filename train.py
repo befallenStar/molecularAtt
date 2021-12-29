@@ -12,6 +12,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 
 from model.drug3dnet import Drug3DNet
+from model.molAtt import MolAtt
 from utils.loadData import load_data
 from time import time
 
@@ -93,7 +94,7 @@ def test(model, test_db, batch_size, index, val_fn, device=torch.device('cpu')):
 def main():
     # device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    path_checkpoint = './checkpoint_{}.pkl'.format(args.index)
+    path_checkpoint = './checkpoint_mol_{}.pkl'.format(args.index)
     # make the str of model
     # create the model with the str
     input_channel = 5
