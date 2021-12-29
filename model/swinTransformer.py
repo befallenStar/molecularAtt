@@ -67,7 +67,7 @@ class WindowAttention(nn.Module):
         coords_d = torch.arange(self.window_size)
         coords_h = torch.arange(self.window_size)
         coords_w = torch.arange(self.window_size)
-        coords = torch.stack(torch.meshgrid([coords_d, coords_h, coords_w]))
+        coords = torch.stack(torch.meshgrid([coords_d, coords_h, coords_w], indexing='ij'))
         coords_flatten = torch.flatten(coords, 1)
         relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]  # 2, Wh*Ww, Wh*Ww
         relative_coords = relative_coords.permute(1, 2, 0).contiguous()  # Wh*Ww, Wh*Ww, 2
@@ -248,9 +248,9 @@ class SwinTransformer(nn.Module):
 
 
 def main():
-    data = torch.randn([4, 16, 16, 16, 5])
+    data = torch.randn([4, 16, 16, 16, 32])
     window_size = 8
-    swin = SwinTransformer(5, 16, 5, window_size=window_size, shift_size=window_size // 2)
+    swin = SwinTransformer(32, 16, 8, window_size=window_size, shift_size=window_size // 2)
     result = swin(data)
     print(result.shape)
 
