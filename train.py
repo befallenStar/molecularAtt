@@ -97,7 +97,7 @@ def main():
     # make the str of model
     # create the model with the str
     input_channel = 5
-    activation = 'tanh'
+    activation = 'relu'
     model = '{}({}, \"{}\")'.format(args.model, input_channel, activation)
     model = eval(model)
     model.to(device)
