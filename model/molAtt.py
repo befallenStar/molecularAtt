@@ -48,12 +48,12 @@ class FCN(nn.Module):
 
 
 class MolAtt(nn.Module):
-    def __init__(self, cin, size, activation='tanh'):
+    def __init__(self, cin, activation='tanh'):
         super(MolAtt, self).__init__()
         self.backbone = nn.Sequential(
-            GridFeature(cin, 32, size, 8, 8),
-            GridFeature(32, 128, size // 2, 8, 8),
-            GridFeature(128, 512, size // 4, 8, 4),
+            GridFeature(cin, 32, 32, 8, 8),
+            GridFeature(32, 128, 16, 8, 8),
+            GridFeature(128, 512, 8, 8, 4),
         )
         self.fcn1 = FCN(32768, 1024, activation)
         self.fcn2 = FCN(1024, 32, activation)
@@ -72,7 +72,7 @@ def main():
     # data = torch.randn([4, 8, 8, 8, 128])
     # result = grid(data)
     # print(result.shape)
-    molAtt = MolAtt(5, 32)
+    molAtt = MolAtt(5)
     data = torch.randn([4, 32, 32, 32, 5])
     result = molAtt(data)
     print(result.shape)
